@@ -5,7 +5,6 @@ import sympy as sym
 import math
 import matplotlib.pyplot as plt # Matplotlib imported for plotting, tri is for the triangulation plots
 import matplotlib.tri as tri
-from parametrization import theta, K
 
 #Spatial coordinates
 x = sym.symbols('x')
@@ -23,7 +22,8 @@ nabla_u_fabric = np.array([[u_fabric.diff(x,1)],[u_fabric.diff(y,1)]])
 #n = np.array([[0],[1]])
 #g = 2*nabla_u_fabric.transpose().dot(n)[0][0]
 g = u_fabric.diff(y,1)
-f = -u_fabric.diff(x,2)-u_fabric.diff(y,2)
+print(g)
+f = (-u_fabric.diff(x,2)-u_fabric.diff(y,2))
 print(f)
 a = np.array([[1,2]])
 b = np.array([[2,1]])
@@ -210,16 +210,26 @@ for e in range(len(boundary_elements_dirichlet)):
     f_vect[boundary_elements_dirichlet[e][0]]=u_fabric.subs(x,coordinates[boundary_elements_dirichlet[e][0]][0]).subs(y,coordinates[boundary_elements_dirichlet[e][0]][1])
     f_vect[boundary_elements_dirichlet[e][1]]=u_fabric.subs(x,coordinates[boundary_elements_dirichlet[e][1]][0]).subs(y,coordinates[boundary_elements_dirichlet[e][1]][1])
 
-t = np.linspace(0,1,10)
+t = np.linspace(0,0.6,10)
+
 k = t[1]-t[0]
+C = 0.1*k*A+B
+u = np.ones((C.shape[0]))*5
+print(u.shape)
+
+F = np.zeros((C.shape[0]))
+print(f_vect.shape)
+for i in t:
+    rhs = B@u  #np.ndarray.flatten(f_vect)
+    u = np.linalg.solve(C,rhs)
 
 
 
 # solve linear system and remove extra dimention from numpy array
-u=np.linalg.solve(A,f_vect)
-u=u.squeeze()
+# u=np.linalg.solve(A,f_vect)
+# u=u.squeeze()
 
-
+print(u.shape)
 #Compute values of exact solution on the nodes and calculate error in max-value
 u_exact = np.zeros([len(u),1])
 for i in range(len(u_exact)):

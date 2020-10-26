@@ -2,9 +2,9 @@ Point(1) = {0,0,0,1};
 //+
 Point(2) = {1,0,0,1};
 //+
-Point(3) = {1,1,0,1};
+Point(3) = {1,-2,0,1};
 //+
-Point(4) = {0,1,0,1};
+Point(4) = {0,-2,0,1};
 //+
 Line(1) = {1,2};
 //+
@@ -18,8 +18,8 @@ Line Loop(5) = {1,2,3,4};
 //+
 Plane Surface(6) = {5}; 
 //+
-Physical Curve("DirichletBdry") = {2,-4};
+Physical Curve("DirichletBdry") = {1};
 //+
-Physical Curve("NeumannBdry") = {1,-3};
+Physical Curve("NeumannBdry") = {-3,-2,4};
 //+
 Physical Surface("Domain") = {6};
