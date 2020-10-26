@@ -5,7 +5,7 @@ import sympy as sym
 import math
 import matplotlib.pyplot as plt # Matplotlib imported for plotting, tri is for the triangulation plots
 import matplotlib.tri as tri
-
+from parametrization import theta, K
 
 #Spatial coordinates
 x = sym.symbols('x')
@@ -168,6 +168,7 @@ def quad_midpoint_1d(g,ele_num):
 
 A = np.zeros((len(coordinates),len(coordinates)))
 B = np.zeros((len(coordinates),len(coordinates)))
+Z = np.zeros((len(coordinates),len(coordinates)))
 f_vect = np.zeros((len(coordinates),1))
 
 #Shape function integrals:
@@ -191,7 +192,7 @@ for e in range(len(elements)):
         f_vect[elements[e][j],0] = float(f_vect[elements[e][j],0]) + quad_2d_2nd_order(e,f,j)/jac
         for i in range(3):
             A[elements[e][i]][elements[e][j]] += 0.5*shape_grad[i].transpose().dot(transform.dot(shape_grad[j]))/jac
-            
+            B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
             
 # Modify matrix and vector according to boundary conditions
 
@@ -208,6 +209,10 @@ for e in range(len(boundary_elements_dirichlet)):
     A[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
     f_vect[boundary_elements_dirichlet[e][0]]=u_fabric.subs(x,coordinates[boundary_elements_dirichlet[e][0]][0]).subs(y,coordinates[boundary_elements_dirichlet[e][0]][1])
     f_vect[boundary_elements_dirichlet[e][1]]=u_fabric.subs(x,coordinates[boundary_elements_dirichlet[e][1]][0]).subs(y,coordinates[boundary_elements_dirichlet[e][1]][1])
+
+t = np.linspace(0,1,10)
+k = t[1]-t[0]
+
 
 
 # solve linear system and remove extra dimention from numpy array
