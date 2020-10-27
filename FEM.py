@@ -127,8 +127,8 @@ def FEM_solver(geometry, physics, initial = False):
         f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
             
     if initial:
-        return(B,A,u)
-    return (B,A)
+        return(B,A,f_vect,u)
+    return (B,A,f_vect)
 
 def plot(u, geometry):
     #Plot plot solution
