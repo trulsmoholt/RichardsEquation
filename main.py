@@ -149,7 +149,7 @@ def quad_2d_2nd_order(ele_num, f, loc_node):
     x_1 = J.dot(np.array([[1/6],[1/6]]))+c
     x_2 = J.dot(np.array([[2/3],[1/6]]))+c
     x_3 = J.dot(np.array([[1/6],[2/3]]))+c
-    return (1/6)*(f.subs([(x,float(x_1[0][0])),(y,float(x_1[1][0]))])*shape_func[loc_node].subs([(x,1/6),(y,1/6)])+f.subs([(x,float(x_2[0][0])),(y,float(x_2[1][0]))])*shape_func[loc_node].subs([(x,2/3),(y,1/6)])+f.subs([(x,float(x_3[0][0])),(y,float(x_3[1][0]))])*shape_func[loc_node].subs([(x,1/6),(y,2/3)]))
+    return (1/6)*(source(x_1[1][0],x_1[1][0])*shape_func[loc_node].subs([(x,1/6),(y,1/6)])+source(x_2[1][0],x_2[1][0])*shape_func[loc_node].subs([(x,2/3),(y,1/6)])+source(x_3[1][0],x_3[1][0])*shape_func[loc_node].subs([(x,1/6),(y,2/3)]))
 
 #Parametrizes straight boundary segment to [-1,1]
 def param_1d_ele(ele_num):
@@ -183,7 +183,7 @@ A = np.zeros((len(coordinates),len(coordinates)))
 B = np.zeros((len(coordinates),len(coordinates)))
 Z = np.zeros((len(coordinates),len(coordinates)))
 f_vect = np.zeros((len(coordinates),1))
-
+u = np.zeros((A.shape[0]))
 #Shape function integrals:
 shape_int = []
 for fun1 in shape_func:
@@ -202,6 +202,7 @@ for e in range(len(elements)):
     jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
     #Local assembler
     for j in range(3):
+        u[elements[e][j]] = initial(coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
         f_vect[elements[e][j],0] = float(f_vect[elements[e][j],0]) + quad_2d_2nd_order(e,f,j)/jac
         for i in range(3):
             A[elements[e][i]][elements[e][j]] += 0.5*shape_grad[i].transpose().dot(transform.dot(shape_grad[j]))/jac
@@ -227,22 +228,21 @@ t = np.linspace(0,0.6,10)
 
 k = t[1]-t[0]
 C = 0.1*k*A+B
-u = np.ones((C.shape[0]))*5
-print(u.shape)
+
+
+
+
+
 
 F = np.zeros((C.shape[0]))
 print(f_vect.shape)
 for i in t:
-    rhs = B@u  #np.ndarray.flatten(f_vect)
+    rhs = B@u  + np.ndarray.flatten(f_vect)
     u = np.linalg.solve(C,rhs)
 
 
 
-# solve linear system and remove extra dimention from numpy array
-# u=np.linalg.solve(A,f_vect)
-# u=u.squeeze()
 
-print(u.shape)
 #Compute values of exact solution on the nodes and calculate error in max-value
 u_exact = np.zeros([len(u),1])
 for i in range(len(u_exact)):
@@ -250,7 +250,6 @@ for i in range(len(u_exact)):
 u_exact=u_exact.squeeze()
 error = np.amax(np.absolute(u-u_exact))
 
-print(error)
 
 
 
@@ -261,13 +260,3 @@ plt.colorbar()
 plt.show()
 
 
-# Plot exact solution
-plt.tricontourf(xcoords, ycoords, elements, u_exact)
-plt.colorbar()
-plt.show()
-
-
-# Plot error on nodes
-plt.tricontourf(xcoords, ycoords, elements, u-u_exact)
-plt.colorbar()
-plt.show()
