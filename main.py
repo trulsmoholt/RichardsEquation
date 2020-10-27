@@ -6,6 +6,23 @@ import math
 import matplotlib.pyplot as plt # Matplotlib imported for plotting, tri is for the triangulation plots
 import matplotlib.tri as tri
 
+def initial(x,z):
+    if z<-3/4:
+        return -z-3/4
+    else:
+        return 0
+
+def source(x,z):
+    if z<-3/4:
+        return 0
+    else:
+        return 0.006*math.cos(4/3*math.pi*z)*math.sin(2*math.pi*x)
+
+def neumann(x,z):
+    return 0
+def dirichlet(x,z):
+    return 0
+
 #Spatial coordinates
 x = sym.symbols('x')
 y = sym.symbols('y')
@@ -17,16 +34,12 @@ s = sym.symbols('s')
 u_fabric = (1-x)*(1-y)*x*y
 #u_fabric = sym.sin(x)*sym.cos(y)
 
-nabla_u_fabric = np.array([[u_fabric.diff(x,1)],[u_fabric.diff(y,1)]])
 # Let the top boundary be the Neumann boundary, n = [0,1] is the outwards pointing unit normal vector. 
 #n = np.array([[0],[1]])
 #g = 2*nabla_u_fabric.transpose().dot(n)[0][0]
-g = u_fabric.diff(y,1)
-print(g)
 f = (-u_fabric.diff(x,2)-u_fabric.diff(y,2))
 print(f)
-a = np.array([[1,2]])
-b = np.array([[2,1]])
+
 
 
 #Read input file
@@ -155,7 +168,7 @@ def quad_2nd_ord_line(f,ele_num,loc_node):
     x_2 = r[0][0].subs(s,1/math.sqrt(3))
     y_1 = r[1][0].subs(s,-1/math.sqrt(3))
     y_2 = r[1][0].subs(s,1/math.sqrt(3))
-    return (f.subs(x,x_1).subs(y,y_1)*shape_func_1d[loc_node].subs(x,-1/math.sqrt(3))+f.subs(x,x_2).subs(y,y_2)*shape_func_1d[loc_node].subs(x,1/math.sqrt(3)))*dr
+    return (f(x_1, y_1)*shape_func_1d[loc_node].subs(x,-1/math.sqrt(3))+f(x_2,y_2)*shape_func_1d[loc_node].subs(x,1/math.sqrt(3)))*dr
 
 # First order quadrature on line segment (midpoint rule)
 def quad_midpoint_1d(g,ele_num):
@@ -199,7 +212,7 @@ for e in range(len(elements)):
 #Neumann
 for e in range(len(boundary_elements_neumann)):
     for i in range(2):
-        f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(g,e,i)
+        f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(neumann,e,i)
 
 #Dirichlet
 for e in range(len(boundary_elements_dirichlet)):
@@ -207,8 +220,8 @@ for e in range(len(boundary_elements_dirichlet)):
     A[boundary_elements_dirichlet[e][0]][boundary_elements_dirichlet[e][0]]=1
     A[boundary_elements_dirichlet[e][1],:]=0
     A[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
-    f_vect[boundary_elements_dirichlet[e][0]]=u_fabric.subs(x,coordinates[boundary_elements_dirichlet[e][0]][0]).subs(y,coordinates[boundary_elements_dirichlet[e][0]][1])
-    f_vect[boundary_elements_dirichlet[e][1]]=u_fabric.subs(x,coordinates[boundary_elements_dirichlet[e][1]][0]).subs(y,coordinates[boundary_elements_dirichlet[e][1]][1])
+    f_vect[boundary_elements_dirichlet[e][0]]=dirichlet(coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
+    f_vect[boundary_elements_dirichlet[e][1]]=dirichlet(coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
 
 t = np.linspace(0,0.6,10)
 
