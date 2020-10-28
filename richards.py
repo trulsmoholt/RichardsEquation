@@ -61,7 +61,7 @@ class Richards:
             if z<-3/4:
                 return -z-3/4
             else:
-                return 0
+                return -2
 
         def source(x,z):
             if z<-3/4:

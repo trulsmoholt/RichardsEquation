@@ -97,12 +97,12 @@ def FEM_solver(geometry, physics, initial = False):
             tmp.append(sym.integrate(fun1*fun2,(y,0,1-x),(x,0,1)))
         shape_int.append(tmp)
 
-    print(shape_int)
-
+    e_z_global = np.array([[0],[1]])
     # Matrix assembly
     for e in range(len(elements)):
         # extract element information
         [J,c] = local_to_reference_map(e)
+        e_z = J.dot(e_z_global)
         transform = J.dot(J.transpose()) #J*J^t; derivative transformation
         jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
         #Local assembler
@@ -110,7 +110,7 @@ def FEM_solver(geometry, physics, initial = False):
             u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
             f_vect[elements[e][j],0] = float(f_vect[elements[e][j],0]) + quad_2d_2nd_order(e,physics["source"],j)/jac
             for i in range(3):
-                A[elements[e][i]][elements[e][j]] += 0.5*shape_grad[i].transpose().dot(transform.dot(shape_grad[j]))/jac
+                A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]+e_z).transpose().dot(transform.dot(shape_grad[j]))/jac
                 B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
     #Neumann
     for e in range(len(boundary_elements_neumann)):
