@@ -128,27 +128,26 @@ def FEM_solver(geometry, physics, initial = False):
     def mass(f=None,u=None):
         def local_interpolator(f,u,ele_num,x,y):
             J,c = local_to_reference_map(ele_num)
-            x_r = J@np.array([[float(x),float(y)]]).T
-            return f(psi[elements[ele_num][0]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][1]]*x_r[0]+u[elements[ele_num][2]]*x_r[1])
-        B = np.zeros(f_vect.shape[0])
+            x_r = J@np.array([[float(x),float(y)]]).T + c
+            return f(u[elements[ele_num][0]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][1]]*x_r[0]+u[elements[ele_num][2]]*x_r[1])
+        M = np.zeros(f_vect.shape[0])
         for e in range(len(elements)):
             # extract element information
             [J,c] = local_to_reference_map(e)
-            e_z = J.dot(e_z_global)
             transform = J.dot(J.transpose()) #J*J^t; derivative transformation
             jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
             interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
             #Local assembler
             for j in range(3):
-                B[elements[e][j]] = float(B[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
-        return(B)
+                M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
+        return(M)
 
                     
 
     
     if initial:
-        return(mass,A,f_vect,u)
-    return (mass,A,f_vect)
+        return(mass,B,A,f_vect,u)
+    return (mass,B,A,f_vect)
 
 def plot(u, geometry):
     #Plot plot solution

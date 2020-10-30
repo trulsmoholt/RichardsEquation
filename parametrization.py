@@ -10,21 +10,15 @@ n = 2.9
 
 
 def theta(psi):
-    t = np.zeros(psi.shape)
-    for i in range(psi.shape[0]):
-        if psi[i] <=0:
-            t[i]=theta_r+(theta_s-theta_r)*math.pow(1/(1+math.pow(-alpha*psi[i],n)),(n-1)/n)
-        else:
-            t[i]=theta_s
-    return t
+    if psi <=0:
+        return theta_r+(theta_s-theta_r)*math.pow(1/(1+math.pow(-alpha*psi,n)),(n-1)/n)
+    else:
+        return theta_s
+
 
 def k(psi):
     return k_s*math.pow(theta(psi),0.5)*(1-math.pow(1-math.pow(theta(psi),n/(n-1)),(n-1)/n)**2)
 
+print(k(0))
 
 
-
-# x = np.linspace(-3,0,20,endpoint=False)
-# for t in x:
-#     plt.plot(t,k(t),'*')
-# plt.show()
