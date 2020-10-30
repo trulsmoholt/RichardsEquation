@@ -12,7 +12,6 @@ n = 2.9
 def theta(psi):
     t = np.zeros(psi.shape)
     for i in range(psi.shape[0]):
-        print(psi[i])
         if psi[i] <=0:
             t[i]=theta_r+(theta_s-theta_r)*math.pow(1/(1+math.pow(-alpha*psi[i],n)),(n-1)/n)
         else:

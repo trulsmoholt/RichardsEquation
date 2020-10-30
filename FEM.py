@@ -51,12 +51,11 @@ def FEM_solver(geometry, physics, initial = False):
         return f.subs(x,x_mid).subs(y,y_mid)
     #Second order quadrature: weights = 1/6, nodes = (1/6,1/6), (1/6,2/3), (2/3,1/6)
     def quad_2d_2nd_order(ele_num, f, loc_node):
-        source = physics["source"]
         [J,c] = reference_to_local_map(ele_num)
         x_1 = J.dot(np.array([[1/6],[1/6]]))+c
         x_2 = J.dot(np.array([[2/3],[1/6]]))+c
         x_3 = J.dot(np.array([[1/6],[2/3]]))+c
-        return (1/6)*(source(x_1[1][0],x_1[1][0])*shape_func[loc_node].subs([(x,1/6),(y,1/6)])+source(x_2[1][0],x_2[1][0])*shape_func[loc_node].subs([(x,2/3),(y,1/6)])+source(x_3[1][0],x_3[1][0])*shape_func[loc_node].subs([(x,1/6),(y,2/3)]))
+        return (1/6)*(f(x_1[0][0],x_1[1][0])*shape_func[loc_node].subs([(x,1/6),(y,1/6)])+f(x_2[0][0],x_2[1][0])*shape_func[loc_node].subs([(x,2/3),(y,1/6)])+f(x_3[0][0],x_3[1][0])*shape_func[loc_node].subs([(x,1/6),(y,2/3)]))
     #Parametrizes straight boundary segment to [-1,1]
     def param_1d_ele(ele_num):
         return np.array([[coordinates[boundary_elements_neumann[ele_num][0]][0]+(coordinates[boundary_elements_neumann[ele_num][1]][0]-coordinates[boundary_elements_neumann[ele_num][0]][0])*0.5*(s+1)],[coordinates[boundary_elements_neumann[ele_num][0]][1]+(coordinates[boundary_elements_neumann[ele_num][1]][1]-coordinates[boundary_elements_neumann[ele_num][0]][1])*0.5*(s+1)]])
@@ -126,9 +125,30 @@ def FEM_solver(geometry, physics, initial = False):
         f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
         f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
             
+    def mass(f=None,u=None):
+        def local_interpolator(f,u,ele_num,x,y):
+            J,c = local_to_reference_map(ele_num)
+            x_r = J@np.array([[float(x),float(y)]]).T
+            return f(psi[elements[ele_num][0]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][1]]*x_r[0]+u[elements[ele_num][2]]*x_r[1])
+        B = np.zeros(f_vect.shape[0])
+        for e in range(len(elements)):
+            # extract element information
+            [J,c] = local_to_reference_map(e)
+            e_z = J.dot(e_z_global)
+            transform = J.dot(J.transpose()) #J*J^t; derivative transformation
+            jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
+            interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
+            #Local assembler
+            for j in range(3):
+                B[elements[e][j]] = float(B[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
+        return(B)
+
+                    
+
+    
     if initial:
-        return(B,A,f_vect,u)
-    return (B,A,f_vect)
+        return(mass,A,f_vect,u)
+    return (mass,A,f_vect)
 
 def plot(u, geometry):
     #Plot plot solution
@@ -136,3 +156,4 @@ def plot(u, geometry):
     plt.tricontourf(xcoords, ycoords, geometry["elements"], u)
     plt.colorbar()
     plt.show()
+
