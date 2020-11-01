@@ -19,6 +19,5 @@ def theta(psi):
 def k(psi):
     return k_s*math.pow(theta(psi),0.5)*(1-math.pow(1-math.pow(theta(psi),n/(n-1)),(n-1)/n)**2)
 
-print(k(0))
 
 

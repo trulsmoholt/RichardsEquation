@@ -129,7 +129,7 @@ def FEM_solver(geometry, physics, initial = False):
         def local_interpolator(f,u,ele_num,x,y):
             J,c = local_to_reference_map(ele_num)
             x_r = J@np.array([[float(x),float(y)]]).T + c
-            return f(u[elements[ele_num][0]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][1]]*x_r[0]+u[elements[ele_num][2]]*x_r[1])
+            return f(u[elements[ele_num][2]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][0]]*x_r[0]+u[elements[ele_num][1]]*x_r[1])
         M = np.zeros(f_vect.shape[0])
         for e in range(len(elements)):
             # extract element information
