@@ -86,7 +86,6 @@ def FEM_solver(geometry, physics, initial = False):
     A = np.zeros((len(coordinates),len(coordinates)))
     B = np.zeros((len(coordinates),len(coordinates)))
     Z = np.zeros((len(coordinates),len(coordinates)))
-    f_vect = np.zeros((len(coordinates),1))
     u = np.zeros((A.shape[0]))
     #Shape function integrals:
     shape_int = []
@@ -141,13 +140,31 @@ def FEM_solver(geometry, physics, initial = False):
             for j in range(3):
                 M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
         return(M)
+    def source(t):
+        f_vect = np.zeros((len(coordinates)))
+        f_old = physics["source"]
+        f = lambda x,y: f_old(x,y,t)
+        for e in range(len(elements)):
+            # extract element information
+            [J,c] = local_to_reference_map(e)
+            jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
+            #Local assembler
+            for j in range(3):
+                f_vect[elements[e][j]] = float(f_vect[elements[e][j]]) + quad_2d_2nd_order(e,f,j)/jac       
+        for e in range(len(boundary_elements_neumann)):
+            for i in range(2):
+                f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(physics["neumann"],e,i)
+        for e in range(len(boundary_elements_dirichlet)):
+            f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
+            f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
+        return f_vect
 
                     
 
     
     if initial:
-        return(mass,B,A,f_vect,u)
-    return (mass,B,A,f_vect)
+        return(mass,B,A,source,u)
+    return (mass,B,A,source)
 
 def plot(u, geometry):
     #Plot plot solution
