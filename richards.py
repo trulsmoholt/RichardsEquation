@@ -3,7 +3,7 @@ import math
 class Richards:
     def __init__(self):
         #Read input file
-        gmshfile = open("mesh/domain.msh",'r')
+        gmshfile = open("mesh/mesh1.msh",'r')
         nodes = False
         element = False
         physicalname = False
@@ -57,17 +57,11 @@ class Richards:
         elements=np.delete(elements,0,axis=0)   
         boundary_elements_dirichlet=np.delete(boundary_elements_dirichlet,0,axis=0)
         boundary_elements_neumann=np.delete(boundary_elements_neumann,0,axis=0)
-        def initial(x,z):
-            if z<-3/4:
-                return -z-3/4
-            else:
-                return -2
+        def initial(x,y):
+            return 0
 
-        def source(x,z):
-            if z<-3/4:
-                return 0
-            else:
-                return 0.006*math.cos(4/3*math.pi*z)*math.sin(2*math.pi*x)
+        def source(x,y,t):
+            return -2*t*x*(x - 1) - 2*t*y*(y - 1) + x*y*(1 - x)*(1 - y)
 
         def neumann(x,z):
             return 0

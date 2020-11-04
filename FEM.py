@@ -172,4 +172,13 @@ def plot(u, geometry):
     plt.tricontourf(xcoords, ycoords, geometry["elements"], u)
     plt.colorbar()
     plt.show()
+def vectorize(u,geometry):
+    x = sym.symbols('x')
+    y = sym.symbols('y')
+    coordinates = geometry["coordinates"]
+    u_vect = np.zeros((len(coordinates)))
+    for i in range(len(u_vect)):
+        u_vect[i] = u.subs(x,coordinates[i][0]).subs(y,coordinates[i][1])
+    u_vect = u_vect.squeeze()
+    return u_vect
 

@@ -1,11 +1,20 @@
 import numpy as np
-
+import sympy as sym
 from FEM import FEM_solver, plot
 from richards import Richards
 from parametrization import theta
+x = sym.Symbol('x')
+y = sym.Symbol('y')
+t = sym.Symbol('t')
+u_exact = t*x*y*(x-1)*(y-1)
+
+f = (-3*sym.Pow(u_exact,2)+3*u_exact)*sym.diff(u_exact,t)
+f = sym.lambdify([x,y,t],f)
+print(f(0.5,0.5,1))
+print(f)
 
 equation = Richards()
-mass,B,A,f,u = FEM_solver(equation.geometry, equation.physics, initial = True)
+mass,B,A,source,u = FEM_solver(equation.geometry, equation.physics, initial = True)
 
 t = np.linspace(0,1,10)
 
