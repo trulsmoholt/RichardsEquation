@@ -106,14 +106,10 @@ def FEM_solver(geometry, physics, initial = False):
         #Local assembler
         for j in range(3):
             u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
-            f_vect[elements[e][j],0] = float(f_vect[elements[e][j],0]) + quad_2d_2nd_order(e,physics["source"],j)/jac
             for i in range(3):
                 A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]+e_z).transpose().dot(transform.dot(shape_grad[j]))/jac
                 B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
-    #Neumann
-    for e in range(len(boundary_elements_neumann)):
-        for i in range(2):
-            f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(physics["neumann"],e,i)
+
 
     #Dirichlet
     for e in range(len(boundary_elements_dirichlet)):
@@ -121,15 +117,13 @@ def FEM_solver(geometry, physics, initial = False):
         A[boundary_elements_dirichlet[e][0]][boundary_elements_dirichlet[e][0]]=1
         A[boundary_elements_dirichlet[e][1],:]=0
         A[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
-        f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
-        f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
-            
+       
     def mass(f=None,u=None):
         def local_interpolator(f,u,ele_num,x,y):
             J,c = local_to_reference_map(ele_num)
             x_r = J@np.array([[float(x),float(y)]]).T + c
             return f(u[elements[ele_num][2]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][0]]*x_r[0]+u[elements[ele_num][1]]*x_r[1])
-        M = np.zeros(f_vect.shape[0])
+        M = np.zeros(len(coordinates))
         for e in range(len(elements)):
             # extract element information
             [J,c] = local_to_reference_map(e)
