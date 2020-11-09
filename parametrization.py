@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import sympy as sym
 theta_s = 0.42
 theta_r = 0.026
 k_s = 0.12
@@ -18,6 +19,15 @@ d = 0.05947441217
 #         return theta_r+(theta_s-theta_r)*math.pow(1/(1+math.pow(-alpha*psi,n)),(n-1)/n)
 #     else:
 #         return theta_s
+
+def theta_sym():
+    p = sym.Symbol('p')
+    theta_s = sym.Piecewise(
+        ((L_s-s_wm)*d,p<0),
+        (1,p>1),
+        (s_wm*p + (L_s -s_wm)*(-(4/3)*p**3 + 2*p**2 + d),True)
+    )
+    return theta_s
 
 def theta(p):
     if p <=0:

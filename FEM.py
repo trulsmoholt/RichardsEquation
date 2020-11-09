@@ -107,7 +107,7 @@ def FEM_solver(geometry, physics, initial = False):
         for j in range(3):
             u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
             for i in range(3):
-                A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]+e_z).transpose().dot(transform.dot(shape_grad[j]))/jac
+                A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
                 B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
 
 
@@ -133,6 +133,8 @@ def FEM_solver(geometry, physics, initial = False):
             #Local assembler
             for j in range(3):
                 M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
+        
+
         return(M)
     def source(t):
         f_vect = np.zeros((len(coordinates)))
