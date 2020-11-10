@@ -28,11 +28,15 @@ TOL = 0.0005
 L = 0.15
 u_j = np.zeros(u.shape)
 u_j_n = np.ones(u.shape)
+
+
+
 def newton(u_j,u_n,TOL,L,K,tau,f):
     rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
     lhs = L*B+tau*K*A
     u_j_n = np.linalg.solve(lhs,rhs)
     print(np.linalg.norm(u_j_n-u_j))
+
     if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
         return newton(u_j_n,u_n,TOL,L,K,tau,f)
     else:
@@ -45,7 +49,6 @@ for i in th[1:]:
     u_e = vectorize(u_exact.subs(t,i),equation.geometry)
     plot(u_e,equation.geometry)
     plot(u-u_e,equation.geometry)
-
 
 
 

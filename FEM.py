@@ -11,6 +11,14 @@ def FEM_solver(geometry, physics, initial = False):
     boundary_elements_dirichlet = geometry["boundary_elements_dirichlet"]
     boundary_elements_neumann = geometry["boundary_elements_neumann"]
 
+    boundary_nodes = set()
+    for e in boundary_elements_dirichlet:
+        boundary_nodes.add(e[0])
+        boundary_nodes.add(e[1])
+
+
+
+
 
     #Spatial coordinates
     x = sym.symbols('x')
@@ -108,7 +116,10 @@ def FEM_solver(geometry, physics, initial = False):
             u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
             for i in range(3):
                 A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
-                B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
+                if elements[e][i] in boundary_nodes or elements[e][j] in boundary_nodes:
+                    pass
+                else:
+                    B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
 
 
     #Dirichlet
@@ -117,12 +128,19 @@ def FEM_solver(geometry, physics, initial = False):
         A[boundary_elements_dirichlet[e][0]][boundary_elements_dirichlet[e][0]]=1
         A[boundary_elements_dirichlet[e][1],:]=0
         A[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
-       
+
     def mass(f=None,u=None):
         def local_interpolator(f,u,ele_num,x,y):
             J,c = local_to_reference_map(ele_num)
             x_r = J@np.array([[float(x),float(y)]]).T + c
-            return f(u[elements[ele_num][2]]*(1-x_r[0]-x_r[1])+u[elements[ele_num][0]]*x_r[0]+u[elements[ele_num][1]]*x_r[1])
+            x2 = 1-x_r[0]-x_r[1];x1 = x_r[1];x0 = x_r[0]
+            if elements[ele_num][2] in boundary_nodes:
+                x2 = 0
+            if elements[ele_num][1] in boundary_nodes:
+                x1=0
+            if elements[ele_num][0] in boundary_nodes:
+                x0 = 0
+            return f(u[elements[ele_num][2]]*x2+u[elements[ele_num][0]]*x0+u[elements[ele_num][1]]*x1)
         M = np.zeros(len(coordinates))
         for e in range(len(elements)):
             # extract element information
@@ -132,8 +150,10 @@ def FEM_solver(geometry, physics, initial = False):
             interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
             #Local assembler
             for j in range(3):
-                M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
-        
+                if elements[e][j] in boundary_nodes:
+                    pass
+                else:
+                    M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
 
         return(M)
     def source(t):
@@ -154,10 +174,6 @@ def FEM_solver(geometry, physics, initial = False):
             f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
             f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
         return f_vect
-
-                    
-
-    
     if initial:
         return(mass,B,A,source,u)
     return (mass,B,A,source)

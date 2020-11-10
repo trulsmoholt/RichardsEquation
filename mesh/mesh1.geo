@@ -18,8 +18,6 @@ Line Loop(5) = {1,2,3,4};
 //+
 Plane Surface(6) = {5}; 
 //+
-Physical Curve("DirichletBdry") = {2,-4};
-//+
-Physical Curve("NeumannBdry") = {1,-3};
+Physical Curve("DirichletBdry") = {1,2,-4,-3};
 //+
 Physical Surface("Domain") = {6};
