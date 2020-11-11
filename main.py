@@ -8,7 +8,7 @@ y = sym.Symbol('y')
 t = sym.Symbol('t')
 p = sym.Symbol('p')
 u_exact = t*x*y*(x-1)*(y-1)
-K = 1
+K = 10
 
 theta_s = theta_sym()
 f = (K*(-sym.diff(u_exact,x,2)-sym.diff(u_exact,y,2)) + sym.diff(theta_s.subs(p,u_exact),t))
@@ -21,15 +21,15 @@ physics = equation.getPhysics()
 physics['source'] = f
 mass,B,A,source,u = FEM_solver(equation.geometry, equation.physics, initial = True)
 
-th = np.linspace(0,1,5)
+th = np.linspace(7.9,8,10)
 
 tau = th[1]-th[0]
-TOL = 0.0005
-L = 0.15
+TOL = 0.00005
+L = 0.7
 u_j = np.zeros(u.shape)
 u_j_n = np.ones(u.shape)
 
-
+u = vectorize(u_exact.subs(t,7.9),equation.geometry)
 
 def newton(u_j,u_n,TOL,L,K,tau,f):
     rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
