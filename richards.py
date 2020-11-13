@@ -3,7 +3,7 @@ import math
 class Richards:
     def __init__(self):
         #Read input file
-        gmshfile = open("mesh/mesh1.msh",'r')
+        gmshfile = open("mesh/neumann1.msh",'r')
         nodes = False
         element = False
         physicalname = False
@@ -63,8 +63,8 @@ class Richards:
         def source(x,y,t):
             return -2*t*x*(x - 1) - 2*t*y*(y - 1) + x*y*(1 - x)*(1 - y)
 
-        def neumann(x,z):
-            return 0
+        def neumann(x,y,t):
+            return t*x*(x - 1)
         def dirichlet(x,z):
             return 0
 

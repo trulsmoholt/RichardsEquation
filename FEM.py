@@ -11,10 +11,10 @@ def FEM_solver(geometry, physics, initial = False):
     boundary_elements_dirichlet = geometry["boundary_elements_dirichlet"]
     boundary_elements_neumann = geometry["boundary_elements_neumann"]
 
-    boundary_nodes = set()
+    boundary_nodes_dirichlet = set()
     for e in boundary_elements_dirichlet:
-        boundary_nodes.add(e[0])
-        boundary_nodes.add(e[1])
+        boundary_nodes_dirichlet.add(e[0])
+        boundary_nodes_dirichlet.add(e[1])
 
 
 
@@ -81,13 +81,7 @@ def FEM_solver(geometry, physics, initial = False):
         y_1 = r[1][0].subs(s,-1/math.sqrt(3))
         y_2 = r[1][0].subs(s,1/math.sqrt(3))
         return (f(x_1, y_1)*shape_func_1d[loc_node].subs(x,-1/math.sqrt(3))+f(x_2,y_2)*shape_func_1d[loc_node].subs(x,1/math.sqrt(3)))*dr
-    # First order quadrature on line segment (midpoint rule)
-    def quad_midpoint_1d(g,ele_num):
-        r = param_1d_ele(ele_num)
-        dr = param_1d_ele_derivative(ele_num)
-        x_1 = r[0][0].subs(s,0)
-        y_1 = r[1][0].subs(s,0)
-        return g(x_1,y_1)*dr
+
 
 
 
@@ -116,7 +110,7 @@ def FEM_solver(geometry, physics, initial = False):
             u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
             for i in range(3):
                 A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
-                if elements[e][i] in boundary_nodes or elements[e][j] in boundary_nodes:
+                if elements[e][i] in boundary_nodes_dirichlet or elements[e][j] in boundary_nodes_dirichlet:
                     pass
                 else:
                     B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
@@ -134,11 +128,11 @@ def FEM_solver(geometry, physics, initial = False):
             J,c = local_to_reference_map(ele_num)
             x_r = J@np.array([[float(x),float(y)]]).T + c
             x2 = 1-x_r[0]-x_r[1];x1 = x_r[1];x0 = x_r[0]
-            if elements[ele_num][2] in boundary_nodes:
+            if elements[ele_num][2] in boundary_nodes_dirichlet:
                 x2 = 0
-            if elements[ele_num][1] in boundary_nodes:
+            if elements[ele_num][1] in boundary_nodes_dirichlet:
                 x1=0
-            if elements[ele_num][0] in boundary_nodes:
+            if elements[ele_num][0] in boundary_nodes_dirichlet:
                 x0 = 0
             return f(u[elements[ele_num][2]]*x2+u[elements[ele_num][0]]*x0+u[elements[ele_num][1]]*x1)
         M = np.zeros(len(coordinates))
@@ -150,7 +144,7 @@ def FEM_solver(geometry, physics, initial = False):
             interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
             #Local assembler
             for j in range(3):
-                if elements[e][j] in boundary_nodes:
+                if elements[e][j] in boundary_nodes_dirichlet:
                     pass
                 else:
                     M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order(e,interpolator,j)/jac
@@ -159,6 +153,7 @@ def FEM_solver(geometry, physics, initial = False):
     def source(t):
         f_vect = np.zeros((len(coordinates)))
         f_old = physics["source"]
+        neumann_boundary = lambda x,y: physics["neumann"](x,y,t)
         f = lambda x,y: f_old(x,y,t)
         for e in range(len(elements)):
             # extract element information
@@ -169,7 +164,7 @@ def FEM_solver(geometry, physics, initial = False):
                 f_vect[elements[e][j]] = float(f_vect[elements[e][j]]) + quad_2d_2nd_order(e,f,j)/jac       
         for e in range(len(boundary_elements_neumann)):
             for i in range(2):
-                f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(physics["neumann"],e,i)
+                f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(neumann_boundary,e,i)
         for e in range(len(boundary_elements_dirichlet)):
             f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
             f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])

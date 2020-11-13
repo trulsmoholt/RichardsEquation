@@ -10,6 +10,8 @@ p = sym.Symbol('p')
 u_exact = t*x*y*(x-1)*(y-1)
 K = 10
 
+neumann = sym.diff(u_exact,y)
+print(neumann.subs(y,1))
 theta_s = theta_sym()
 f = (K*(-sym.diff(u_exact,x,2)-sym.diff(u_exact,y,2)) + sym.diff(theta_s.subs(p,u_exact),t))
 
@@ -44,6 +46,7 @@ def newton(u_j,u_n,TOL,L,K,tau,f):
 
 
 for i in th[1:]:
+    plot(source(i),equation.geometry)
     u =  newton(u,u,TOL,L,K,tau,source(i))
     plot(u,equation.geometry)
     u_e = vectorize(u_exact.subs(t,i),equation.geometry)
