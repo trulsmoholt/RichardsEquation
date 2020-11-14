@@ -64,7 +64,8 @@ class Richards:
             return -2*t*x*(x - 1) - 2*t*y*(y - 1) + x*y*(1 - x)*(1 - y)
 
         def neumann(x,y,t):
-            return t*x*(x - 1)
+            # need to multiply flux with K
+            return 10 *t*x*(x - 1)
         def dirichlet(x,z):
             return 0
 

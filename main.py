@@ -10,8 +10,6 @@ p = sym.Symbol('p')
 u_exact = t*x*y*(x-1)*(y-1)
 K = 10
 
-neumann = sym.diff(u_exact,y)
-print(neumann.subs(y,1))
 theta_s = theta_sym()
 f = (K*(-sym.diff(u_exact,x,2)-sym.diff(u_exact,y,2)) + sym.diff(theta_s.subs(p,u_exact),t))
 
@@ -21,12 +19,13 @@ f = sym.lambdify([x,y,t],f)
 equation = Richards()
 physics = equation.getPhysics()
 physics['source'] = f
+physics['neumann'] = sym.lambdify([x,y,t],K*sym.diff(u_exact,y))
 mass,B,A,source,u = FEM_solver(equation.geometry, equation.physics, initial = True)
 
 th = np.linspace(7.9,8,10)
 
 tau = th[1]-th[0]
-TOL = 0.00005
+TOL = 0.000005
 L = 0.7
 u_j = np.zeros(u.shape)
 u_j_n = np.ones(u.shape)
