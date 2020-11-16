@@ -81,13 +81,6 @@ def FEM_solver(geometry, physics, initial = False):
         y_1 = r[1][0].subs(s,-1/math.sqrt(3))
         y_2 = r[1][0].subs(s,1/math.sqrt(3))
         return (f(x_1, y_1)*shape_func_1d[loc_node].subs(x,-1/math.sqrt(3))+f(x_2,y_2)*shape_func_1d[loc_node].subs(x,1/math.sqrt(3)))*dr
-    #Second order quadrature: weights = 1/6, nodes = (1/6,1/6), (1/6,2/3), (2/3,1/6)
-    def quad_2d_2nd_order(ele_num, f, loc_node):
-        [J,c] = reference_to_local_map(ele_num)
-        x_1 = J.dot(np.array([[1/6],[1/6]]))+c
-        x_2 = J.dot(np.array([[2/3],[1/6]]))+c
-        x_3 = J.dot(np.array([[1/6],[2/3]]))+c
-        return (1/6)*(f(x_1[0][0],x_1[1][0])+f(x_2[0][0],x_2[1][0])+f(x_3[0][0],x_3[1][0]))
     def local_interpolator(f,u,ele_num,x,y):
         J,c = local_to_reference_map(ele_num)
         x_r = J@np.array([[float(x),float(y)]]).T + c
@@ -175,11 +168,8 @@ def FEM_solver(geometry, physics, initial = False):
             f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
             f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
         return f_vect
-    if initial:
-        return(mass,B,A,source,u)
-    return (mass,B,A,source)
-
     def stiffness(f,u):
+        C = np.zeros((len(coordinates),len(coordinates)))
         interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
         # Matrix assembly
         for e in range(len(elements)):
@@ -190,19 +180,28 @@ def FEM_solver(geometry, physics, initial = False):
             jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
             #Local assembler
             for j in range(3):
-                u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
                 for i in range(3):
                     x_1 = J.dot(np.array([[1/6],[1/6]]))+c
                     x_2 = J.dot(np.array([[2/3],[1/6]]))+c
                     x_3 = J.dot(np.array([[1/6],[2/3]]))+c
                     K_int = (1/6)*(interpolator(x_1[0][0],x_1[1][0])+interpolator(x_2[0][0],x_2[1][0])+interpolator(x_3[0][0],x_3[1][0]))
-                    A[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
-                    if elements[e][i] in boundary_nodes_dirichlet or elements[e][j] in boundary_nodes_dirichlet:
-                        pass
-                    else:
-                        B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
+                    C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
+
+            #Dirichlet
+        for e in range(len(boundary_elements_dirichlet)):
+            C[boundary_elements_dirichlet[e][0],:]=0
+            C[boundary_elements_dirichlet[e][0]][boundary_elements_dirichlet[e][0]]=1
+            C[boundary_elements_dirichlet[e][1],:]=0
+            C[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
+
+        return C
 
         
+    if initial:
+        return(mass,A,B,stiffness,source,u)
+    return (mass,B,A,stiffness,source)
+
+
 
 def plot(u, geometry):
     #Plot plot solution

@@ -14,6 +14,12 @@ d = 0.05947441217
 
 
 
+
+
+
+
+
+
 # def theta(psi):
 #     if psi <=0:
 #         return theta_r+(theta_s-theta_r)*math.pow(1/(1+math.pow(-alpha*psi,n)),(n-1)/n)
@@ -28,6 +34,9 @@ def theta_sym():
         (s_wm*p + (L_s -s_wm)*(-(4/3)*p**3 + 2*p**2 + d),True)
     )
     return theta_s
+
+
+
 
 def theta(p):
     if p <=0:
