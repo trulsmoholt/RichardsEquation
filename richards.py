@@ -3,7 +3,7 @@ import math
 class Richards:
     def __init__(self):
         #Read input file
-        gmshfile = open("mesh/neumann1.msh",'r')
+        gmshfile = open("mesh/mesh1.msh",'r')
         nodes = False
         element = False
         physicalname = False
@@ -67,7 +67,7 @@ class Richards:
             # need to multiply flux with K
             return 10 *t*x*(x - 1)
         def dirichlet(x,z):
-            return 0
+            return -1
 
         self.geometry = {
             "coordinates": coordinates,

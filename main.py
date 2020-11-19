@@ -7,11 +7,11 @@ x = sym.Symbol('x')
 y = sym.Symbol('y')
 t = sym.Symbol('t')
 p = sym.Symbol('p')
-u_exact = t*x*y*(x-1)*(y-1)
-K = 1 + p**2
+u_exact = -t*x*y*(1-x)*(1-y) - 1
+K = p**2
 
 theta_s = theta_sym()
-f = (K.subs(p,u_exact)*(-sym.diff(u_exact,x,2)-sym.diff(u_exact,y,2)) + sym.diff(theta_s.subs(p,u_exact),t))
+f = -x*(1-x)*y*(1-y)/(2+t*x*(1-x)*y*(1-y))**2 -(2*t*(1+t*x*(1-x)*y*(1-y))**2 )*(x*(1-x) + y*(1-y)) + (2*(1+t*x*(1-x)*y*(1-y))*t**2)*((1-2*x)**2*y**2*(1-y)**2+x**2*(1-x)**2*(1-2*y)**2)
 
 f = sym.lambdify([x,y,t],f)
 
@@ -25,10 +25,8 @@ mass,A,B,stiffness,source,u = FEM_solver(equation.geometry, equation.physics, in
 th = np.linspace(0,1,10)
 
 tau = th[1]-th[0]
-TOL = 0.000005
-L = 1.33/(2-1.9)
-u_j = np.zeros(u.shape)
-u_j_n = np.ones(u.shape)
+TOL = 0.0005
+L = 3
 
 u = vectorize(u_exact.subs(t,0),equation.geometry)
 

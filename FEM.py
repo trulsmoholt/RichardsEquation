@@ -131,6 +131,7 @@ def FEM_solver(geometry, physics, initial = False):
         A[boundary_elements_dirichlet[e][0]][boundary_elements_dirichlet[e][0]]=1
         A[boundary_elements_dirichlet[e][1],:]=0
         A[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
+        
 
     def mass(f=None,u=None):
 
@@ -147,6 +148,9 @@ def FEM_solver(geometry, physics, initial = False):
                     pass
                 else:
                     M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order_shape(e,interpolator,j)/jac
+        for e in range(len(boundary_elements_dirichlet)):
+            M[boundary_elements_dirichlet[e][0]]=0
+            M[boundary_elements_dirichlet[e][1]]=0
 
         return(M)
     def source(t):
@@ -170,21 +174,25 @@ def FEM_solver(geometry, physics, initial = False):
         return f_vect
     def stiffness(f,u):
         C = np.zeros((len(coordinates),len(coordinates)))
-        interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
         # Matrix assembly
         for e in range(len(elements)):
+            interpolator = lambda x,y: local_interpolator(f,u,e,x,y)
             # extract element information
             [J,c] = local_to_reference_map(e)
+            [R,d] = reference_to_local_map(e)
             e_z = J.dot(e_z_global)
             transform = J.dot(J.transpose()) #J*J^t; derivative transformation
             jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
             #Local assembler
             for j in range(3):
                 for i in range(3):
-                    x_1 = J.dot(np.array([[1/6],[1/6]]))+c
-                    x_2 = J.dot(np.array([[2/3],[1/6]]))+c
-                    x_3 = J.dot(np.array([[1/6],[2/3]]))+c
-                    K_int = (1/6)*(interpolator(x_1[0][0],x_1[1][0])+interpolator(x_2[0][0],x_2[1][0])+interpolator(x_3[0][0],x_3[1][0]))
+                    x_1 = R.dot(np.array([[1/3],[1/3]]))+d
+                    x_2 = R.dot(np.array([[3/5],[1/5]]))+d
+                    x_3 = R.dot(np.array([[1/5],[3/5]]))+d
+                    x_4 = R.dot(np.array([[1/5],[1/5]]))+d
+                    w_1 = -9/32; w_2 = 25/96; w_3 = 25/96; w_4 = 25/96
+                    #K_int = quad_2d_2nd_order_shape(e,interpolator,i)
+                    K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0])+w_4*interpolator(x_4[0][0],x_4[1][0]))
                     C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
 
             #Dirichlet
