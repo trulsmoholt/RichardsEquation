@@ -2,19 +2,18 @@ import numpy as np
 import sympy as sym
 from FEM import FEM_solver, plot,vectorize
 from richards import Richards
-from parametrization import theta,theta_sym
+from parametrization import theta_sym
+from differentiation import gradient, divergence
 x = sym.Symbol('x')
 y = sym.Symbol('y')
 t = sym.Symbol('t')
 p = sym.Symbol('p')
 u_exact = -t*x*y*(1-x)*(1-y) - 1
 K = p**2
-
-theta_s = theta_sym()
-f = -x*(1-x)*y*(1-y)/(2+t*x*(1-x)*y*(1-y))**2 -(2*t*(1+t*x*(1-x)*y*(1-y))**2 )*(x*(1-x) + y*(1-y)) + (2*(1+t*x*(1-x)*y*(1-y))*t**2)*((1-2*x)**2*y**2*(1-y)**2+x**2*(1-x)**2*(1-2*y)**2)
-
+theta = 1/(1-p)
+f = sym.diff(theta.subs(p,u_exact),t)-divergence(gradient(u_exact,[x,y]),[x,y],K.subs(p,u_exact))
+print(sym.simplify(f))
 f = sym.lambdify([x,y,t],f)
-
 
 equation = Richards()
 physics = equation.getPhysics()
@@ -25,13 +24,14 @@ mass,A,B,stiffness,source,u = FEM_solver(equation.geometry, equation.physics, in
 th = np.linspace(0,1,10)
 
 tau = th[1]-th[0]
-TOL = 0.0005
+TOL = 0.00005
 L = 3
 
 u = vectorize(u_exact.subs(t,0),equation.geometry)
+plot(u,equation.geometry)
+theta = lambda x: 1/(1-x)
 
-
-K = sym.lambdify([p],K)
+K = lambda x: x**2
 def newton(u_j,u_n,TOL,L,K,tau,f):
     rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
     A = stiffness(K,u_j)

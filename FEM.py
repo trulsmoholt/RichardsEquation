@@ -4,6 +4,7 @@ import sympy as sym
 import math
 import matplotlib.pyplot as plt # Matplotlib imported for plotting, tri is for the triangulation plots
 import matplotlib.tri as tri
+from LocalInterpolator import LocalInterpolator
 
 def FEM_solver(geometry, physics, initial = False):
     coordinates = geometry["coordinates"]
@@ -81,18 +82,8 @@ def FEM_solver(geometry, physics, initial = False):
         y_1 = r[1][0].subs(s,-1/math.sqrt(3))
         y_2 = r[1][0].subs(s,1/math.sqrt(3))
         return (f(x_1, y_1)*shape_func_1d[loc_node].subs(x,-1/math.sqrt(3))+f(x_2,y_2)*shape_func_1d[loc_node].subs(x,1/math.sqrt(3)))*dr
-    def local_interpolator(f,u,ele_num,x,y):
-        J,c = local_to_reference_map(ele_num)
-        x_r = J@np.array([[float(x),float(y)]]).T + c
-        x2 = 1-x_r[0]-x_r[1];x1 = x_r[1];x0 = x_r[0]
-        if elements[ele_num][2] in boundary_nodes_dirichlet:
-            x2 = 0
-        if elements[ele_num][1] in boundary_nodes_dirichlet:
-            x1=0
-        if elements[ele_num][0] in boundary_nodes_dirichlet:
-            x0 = 0
-        return f(u[elements[ele_num][2]]*x2+u[elements[ele_num][0]]*x0+u[elements[ele_num][1]]*x1)
 
+    local_interpolator = LocalInterpolator(elements,boundary_elements_dirichlet,local_to_reference_map)
 
     A = np.zeros((len(coordinates),len(coordinates)))
     B = np.zeros((len(coordinates),len(coordinates)))
