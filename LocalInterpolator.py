@@ -8,6 +8,7 @@ class LocalInterpolator:
 
     def __call__(self,f,u,ele_num,x,y):
         J,c = self.local_to_reference_map(ele_num)
+        self.determinant = np.linalg.det(J)
         x_r = J@np.array([[float(x),float(y)]]).T + c
         x2 = 1-x_r[0]-x_r[1];x1 = x_r[1];x0 = x_r[0]
         if self.elements[ele_num][2] in self.boundary_nodes_dirichlet:

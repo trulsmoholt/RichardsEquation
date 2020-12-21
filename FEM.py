@@ -5,6 +5,7 @@ import math
 import matplotlib.pyplot as plt # Matplotlib imported for plotting, tri is for the triangulation plots
 import matplotlib.tri as tri
 from LocalInterpolator import LocalInterpolator
+from Error import Error
 
 def FEM_solver(geometry, physics, initial = False):
     coordinates = geometry["coordinates"]
@@ -195,10 +196,10 @@ def FEM_solver(geometry, physics, initial = False):
 
         return C
 
-        
+    error = Error(local_interpolator,elements,coordinates)
     if initial:
-        return(mass,A,B,stiffness,source,u)
-    return (mass,B,A,stiffness,source)
+        return(mass,A,B,stiffness,source,u,error)
+    return (mass,B,A,stiffness,source,error)
 
 
 
@@ -217,4 +218,4 @@ def vectorize(u,geometry):
         u_vect[i] = u.subs(x,coordinates[i][0]).subs(y,coordinates[i][1])
     u_vect = u_vect.squeeze()
     return u_vect
-
+    
