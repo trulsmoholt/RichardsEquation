@@ -8,11 +8,11 @@ x = sym.Symbol('x')
 y = sym.Symbol('y')
 t = sym.Symbol('t')
 p = sym.Symbol('p')
-u_exact = -t*x*y*(1-x)*(1-y) - 1
+u_exact = -(t)*x*y*(1-x)*(1-y) - 1
 def difficult():
     K = p**2
     theta = 1/(1-p)
-    f = sym.diff(theta.subs(p,u_exact),t)-divergence(gradient(u_exact,[x,y]),[x,y])
+    f = sym.diff(theta.subs(p,u_exact),t)-divergence(gradient(u_exact,[x,y]),[x,y],K.subs(p,u_exact))
     print(sym.simplify(f))
     f = sym.lambdify([x,y,t],f)
 
@@ -29,10 +29,9 @@ def difficult():
     L = 3
 
     u = vectorize(u_exact.subs(t,0),equation.geometry)
-    plot(u,equation.geometry)
     theta = lambda x: 1/(1-x)
 
-    K = lambda x: 1
+    K = lambda x: x**2
     def newton(u_j,u_n,TOL,L,K,tau,f):
         rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
         A = stiffness(K,u_j)
@@ -54,24 +53,41 @@ def difficult():
         plot(u-u_e,equation.geometry)
         error.l2_error(u,u_exact.subs(t,i))
 
-
+difficult()
 def heat_equation():
-    f = sym.diff(u_exact,t)-(sym.diff(u_exact,x,2)+sym.diff(u_exact,y,2))
+    T_end = 2
+    f = sym.diff(u_exact,t,1)-(sym.diff(u_exact,x,2)+sym.diff(u_exact,y,2))
     f = sym.lambdify([x,y,t],f)
     equation = Richards()
     physics = equation.getPhysics()
     physics['source'] = f
     mass,A,B,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
     u = vectorize(u_exact.subs(t,0),equation.geometry)
-    th = np.linspace(0,1,10)
+    th = np.linspace(0,T_end,8)
     tau = th[1]-th[0]
     for i in th[1:]:
         rhs = tau*source(i)+B@u
-        lhs = A+tau*B
+        lhs = tau*A+B
         u = np.linalg.solve(lhs,rhs)
         u_e = vectorize(u_exact.subs(t,i),equation.geometry)
-        plot(u,equation.geometry)
-        plot(u_e,equation.geometry)
-        plot(u-u_e,equation.geometry)
         error.l2_error(u,u_exact.subs(t,i))
-heat_equation()
+
+    plot(u,equation.geometry)
+    plot(u_e,equation.geometry)
+
+    error.l2_error(u,u_exact.subs(t,T_end))
+#heat_equation()
+
+
+def elliptic():
+    u_exact = -x*y*(1-x)*(1-y)-1
+    f = -(sym.diff(u_exact,x,2)+sym.diff(u_exact,y,2))
+    f = sym.lambdify([x,y],f)
+    equation = Richards()
+    physics = equation.getPhysics()
+    physics['source'] = f
+    mass,A,B,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
+    u = np.linalg.solve(A,source())
+    error.l2_error(u,u_exact)
+    error.max_error(u,u_exact)
+#elliptic()

@@ -22,3 +22,12 @@ class Error:
             err += (1/self.local_interpolator.determinant)*(u_exact_mid-u_mid)**2
         err = math.sqrt(err)
         print("L2 error:",err)
+    def max_error(self,u,u_exact):
+        x = sym.symbols('x')
+        y = sym.symbols('y')
+        u_exact_nodes = np.zeros([len(u),1])
+        for i in range(len(u)):
+            u_exact_nodes[i]=u_exact.subs(x,self.coordinates[i][0]).subs(y,self.coordinates[i][1])
+        u_exact_nodes = u_exact_nodes.squeeze()
+        error = np.amax(np.absolute(u-u_exact_nodes))
+        print("Max error:",error)

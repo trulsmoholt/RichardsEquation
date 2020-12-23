@@ -145,11 +145,15 @@ def FEM_solver(geometry, physics, initial = False):
             M[boundary_elements_dirichlet[e][1]]=0
 
         return(M)
-    def source(t):
+    def source(t=None):
         f_vect = np.zeros((len(coordinates)))
         f_old = physics["source"]
         neumann_boundary = lambda x,y: physics["neumann"](x,y,t)
-        f = lambda x,y: f_old(x,y,t)
+        if t is None:
+            f = lambda x,y: f_old(x,y)
+        else:
+            f = lambda x,y: f_old(x,y,t)
+
         for e in range(len(elements)):
             # extract element information
             [J,c] = local_to_reference_map(e)
