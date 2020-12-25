@@ -1,9 +1,10 @@
 import numpy as np
 import math
+from MeshGenerator import Mesh
 class Richards:
     def __init__(self):
         #Read input file
-        gmshfile = open("mesh/mesh1.msh",'r')
+        gmshfile = open("mesh/mesh12.msh",'r')
         nodes = False
         element = False
         physicalname = False
@@ -57,6 +58,14 @@ class Richards:
         elements=np.delete(elements,0,axis=0)   
         boundary_elements_dirichlet=np.delete(boundary_elements_dirichlet,0,axis=0)
         boundary_elements_neumann=np.delete(boundary_elements_neumann,0,axis=0)
+
+        mesh = Mesh(0.065*math.sqrt(2))
+        boundary_elements_dirichlet = mesh.boundary_elements
+        elements = mesh.elements
+        coordinates = mesh.coordinates
+
+
+
         def initial(x,y):
             return 0
 
