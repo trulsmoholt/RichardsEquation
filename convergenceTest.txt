@@ -1,0 +1,12 @@
+Heat equation 0->1
+timestep    spacestep   L2Error     maxerror
+1/4         1/2         
+1/16        1/4         0.008621    0.004963
+1/64        1/8         0.002165    0.001300
+1/256       1/16        0.000543    0.000326
+
+Richards equation 0->1, linearization error = 0.00005
+timestep    spacestep   L2Error     maxerror
+1/4         1/2         0.040926    0.022637
+1/16        1/4         0.008682    0.005058
+1/64        1/8         0.002745    0.002168 
