@@ -53,7 +53,7 @@ def difficult():
         plot(u-u_e,equation.geometry)
         error.l2_error(u,u_exact.subs(t,i))
 
-#difficult()
+difficult()
 def heat_equation():
     T_end = 2
     f = sym.diff(u_exact,t,1)-(sym.diff(u_exact,x,2)+sym.diff(u_exact,y,2))
@@ -90,4 +90,4 @@ def elliptic():
     u = np.linalg.solve(A,source())
     error.l2_error(u,u_exact)
     error.max_error(u,u_exact)
-elliptic()
+#elliptic()

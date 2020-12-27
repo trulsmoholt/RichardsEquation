@@ -165,10 +165,10 @@ def FEM_solver(geometry, physics, initial = False):
             for i in range(2):
                 f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(neumann_boundary,e,i)
         for e in range(len(boundary_elements_dirichlet)):
-            f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1])
-            f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1])
+            f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1],t)
+            f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1],t)
         return f_vect
-    def stiffness(f,u):
+    def stiffness(f,u,gravity = False):
         C = np.zeros((len(coordinates),len(coordinates)))
         # Matrix assembly
         for e in range(len(elements)):
@@ -176,7 +176,7 @@ def FEM_solver(geometry, physics, initial = False):
             # extract element information
             [J,c] = local_to_reference_map(e)
             [R,d] = reference_to_local_map(e)
-            e_z = J.dot(e_z_global)
+            e_z = R.dot(e_z_global)
             transform = J.dot(J.transpose()) #J*J^t; derivative transformation
             jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
             #Local assembler
@@ -189,7 +189,10 @@ def FEM_solver(geometry, physics, initial = False):
                     w_1 = -9/32; w_2 = 25/96; w_3 = 25/96; w_4 = 25/96
                     #K_int = quad_2d_2nd_order_shape(e,interpolator,i)
                     K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0])+w_4*interpolator(x_4[0][0],x_4[1][0]))
-                    C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
+                    if gravity:
+                        C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]+e_z).transpose().dot(transform.dot(shape_grad[j]))/jac
+                    else:
+                        C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
 
             #Dirichlet
         for e in range(len(boundary_elements_dirichlet)):
