@@ -20,13 +20,13 @@ def richards_equation():
     print(sym.simplify(f))
     f = sym.lambdify([x,y,t],f)
 
-    equation = Richards(max_edge = 0.125)
+    equation = Richards(max_edge = 0.25)
     physics = equation.getPhysics()
     physics['source'] = f
     physics['neumann'] = sym.lambdify([x,y,t],K.subs(p,u_exact)*sym.diff(u_exact,y))
     mass,stiffness,source,error = FEM_solver(equation.geometry, equation.physics)
     B = mass()
-    th = np.linspace(0,1,64)
+    th = np.linspace(0,1,16)
 
     tau = th[1]-th[0]
     TOL = 0.000005

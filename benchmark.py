@@ -4,16 +4,11 @@ import math
 from solver.FEM import FEM_solver, plot,vectorize
 from richards import Richards
 import matplotlib.pyplot as plt
-theta_s = 0.396
-theta_r = 0.131
-k_s = 0.0496
-alpha = 0.423
-n = 2.06
-
-s_wm = 0.125
-L_s = 1.33
-d = 0.05947441217
-
+theta_s = 0.446
+theta_r = 0.0
+k_s = 0.00082
+alpha = 0.152
+n = 1.17
 
 def theta(psi):
     if psi <=0:
@@ -43,14 +38,13 @@ plt.show()
 x = sym.Symbol('x')
 y = sym.Symbol('y')
 t = sym.Symbol('t')
-p = sym.Symbol('p')
-dt = 1/16
+dt = 1
 
 
 
 dirichlet = sym.Piecewise(
     (1-y, y<=1),
-    (-2 + 2.2*t/dt,y>1)
+    (-2 +2.2*t/dt,y>1)
 )
 
 
@@ -58,20 +52,20 @@ dirichlet = sym.Piecewise(
 f = 0
 f = sym.lambdify([x,y,t],f)
 
-equation = Richards()
+equation = Richards("mesh/benchmark.msh")
 physics = equation.getPhysics()
 physics['source'] = f
 physics['neumann'] = lambda x,y,t: 0
 physics['dirichlet'] = sym.lambdify([x,y,t],dirichlet)
-mass,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
+mass,stiffness,source,error = FEM_solver(equation.geometry, equation.physics)
 B = mass()
-th = np.linspace(0,3/16,9,endpoint=False)
+th = np.linspace(0,3,9,endpoint=False)
 print(th)
 tau = th[1]-th[0]
 TOL = 0.0005
-L = 0.04501
-u_j = np.zeros(u.shape)
-u_j_n = np.ones(u.shape)
+L = 0.0074546
+u_j = np.zeros(B.shape[1])
+u_j_n = np.ones(B.shape[1])
 
 u_init = 1-y
 
@@ -85,6 +79,7 @@ def L_scheme(u_j,u_n,TOL,L,K,tau,f):
     u_j_n = np.linalg.solve(lhs,rhs)
 
     print(np.linalg.norm(u_j_n-u_j))
+    plot(u_j_n,equation.geometry)
 
     if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
         return L_scheme(u_j_n,u_n,TOL,L,K,tau,f)

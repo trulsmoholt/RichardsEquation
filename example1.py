@@ -44,8 +44,6 @@ plt.show()
 x = sym.Symbol('x')
 y = sym.Symbol('y')
 t = sym.Symbol('t')
-p = sym.Symbol('p')
-dt = 1/16
 
 
 f = 0.006*sym.cos(4/3*math.pi*y)*sym.sin(2*math.pi*x)

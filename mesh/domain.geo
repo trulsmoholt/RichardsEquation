@@ -26,8 +26,8 @@ Line Loop(7) = {1,2,3,4,5,6};
 //+
 Plane Surface(8) = {7}; 
 //+
-Physical Curve("DirichletBdry") = {2,-4};
+Physical Curve("DirichletBdry") = {2,-5};
 //+
-Physical Curve("NeumannBdry") = {1,3,-5,-6};
+Physical Curve("NeumannBdry") = {1,3,-6,-4};
 //+
 Physical Surface("Domain") = {8};

@@ -101,30 +101,6 @@ def FEM_solver(geometry, physics):
         shape_int.append(tmp)
 
     e_z_global = np.array([[0],[1]])
-    # Matrix assembly
-    for e in range(len(elements)):
-        # extract element information
-        [J,c] = local_to_reference_map(e)
-        e_z = J.dot(e_z_global)
-        transform = J.dot(J.transpose()) #J*J^t; derivative transformation
-        jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
-        #Local assembler
-        for j in range(3):
-            for i in range(3):
-                A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
-                if elements[e][i] in boundary_nodes_dirichlet or elements[e][j] in boundary_nodes_dirichlet:
-                    pass
-                else:
-                    B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
-
-
-    #Dirichlet
-    for e in range(len(boundary_elements_dirichlet)):
-        A[boundary_elements_dirichlet[e][0],:]=0
-        A[boundary_elements_dirichlet[e][0]][boundary_elements_dirichlet[e][0]]=1
-        A[boundary_elements_dirichlet[e][1],:]=0
-        A[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
-        
 
     def mass(f=None,u=None):
         """Returns the stiffness matrix, <phi_i, phi_j>, if nothing is passed, otherwise it returns the inner product <f(u),phi_i>
@@ -157,9 +133,7 @@ def FEM_solver(geometry, physics):
                     pass
                 else:
                     M[elements[e][j]] = float(M[elements[e][j]]) + quad_2d_2nd_order_shape(e,interpolator,j)/jac
-        for e in range(len(boundary_elements_dirichlet)):
-            M[boundary_elements_dirichlet[e][0]]=0
-            M[boundary_elements_dirichlet[e][1]]=0
+
 
         return(M)
     def source(t=None):
@@ -198,9 +172,9 @@ def FEM_solver(geometry, physics):
             # extract element information
             [J,c] = local_to_reference_map(e)
             [R,d] = reference_to_local_map(e)
-            e_z = R.dot(e_z_global)
             transform = J.dot(J.transpose()) #J*J^t; derivative transformation
             jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
+
             #Local assembler
             for j in range(3):
                 for i in range(3):
@@ -210,7 +184,9 @@ def FEM_solver(geometry, physics):
                     w_1 = 1/6; w_2 = 1/6; w_3 = 1/6
                     K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0]))
                     if gravity:
-                        C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]+e_z).transpose().dot(transform.dot(shape_grad[j]))/jac
+                        left = J.T.dot(shape_grad[i])+e_z_global
+                        right = J.T.dot(shape_grad[j])
+                        C[elements[e][i]][elements[e][j]] += K_int*(left.T.dot(right))/jac
                     else:
                         C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
 
