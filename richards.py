@@ -1,11 +1,17 @@
 import numpy as np
 import math
 from MeshGenerator import Mesh
+""" Class for handling mesh, boundarydata and sources/sinks.
+    Can be instantiated with max_edge, in wich case it creates a structured mesh on the unit square with dirichlet boundary.
+    Can also be instantiated with mesh_path to a .msh file in version2 ASCI.
+"""
 class Richards:
-    def __init__(self,max_edge=False):
+    def __init__(self,mesh_path = None,max_edge=False):
         if not max_edge:
             #Read input file
-            gmshfile = open("mesh/example1.msh",'r')
+            if mesh_path is not None:
+                gmshfile = open(mesh_path,'r')
+            #gmshfile = open("mesh/example1.msh",'r')
             nodes = False
             element = False
             physicalname = False
@@ -68,9 +74,6 @@ class Richards:
 
 
 
-        def initial(x,y):
-            return 0
-
         def source(x,y,t):
             return -2*t*x*(x - 1) - 2*t*y*(y - 1) + x*y*(1 - x)*(1 - y)
 
@@ -87,7 +90,6 @@ class Richards:
             "boundary_elements_neumann": boundary_elements_neumann
         }
         self.physics = {
-            "initial": initial,
             "source": source,
             "neumann": neumann,
             "dirichlet": dirichlet

@@ -4,6 +4,8 @@ import unittest
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 class Mesh:
+    """Class for creating mesh on unit square with controlled mesh-size
+    """
     def __init__(self, max_h: float):
         self.max_h = max_h
         self.X = 1
@@ -23,28 +25,6 @@ class Mesh:
             for j in range(self.num_boundary_elements+1):
                 coordinates = np.concatenate((coordinates,np.array([[xp[i],yp[j]]])))
         self.coordinates=np.delete(coordinates,0,0)
-    def __generate_elements(self):
-        """Makes a vector of elements, where each element is an index in the coordinate vector.
-        """
-        def get_element_top_left(n: int):
-            """Return element as row vector of three indices pointing to coordinate vector.
-
-            Keyword arguments:
-            n -- index of top left corner of triangle
-            """
-            return np.array([n,n-self.num_boundary_elements-1,n+1])
-        def get_element_bottom_right(n: int):
-            return np.array([n,n+self.num_boundary_elements+1,n-1])
-
-
-        elements = np.array([[0,0,0]])
-        top_left = filter(lambda x: (x%self.num_boundary_elements+2) != 0,range(self.num_boundary_elements+2,len(self.coordinates)))
-        bottom_right = filter(lambda x: x%self.num_boundary_elements != 1,range(self.num_boundary_elements+2,len(self.coordinates)))
-        for i,j in zip(top_left,bottom_right):
-            elements = np.concatenate((elements,np.array([get_element_top_left(i)])))
-            elements = np.concatenate((elements,np.array([get_element_top_left(j)])))
-        self.elements = np.delete(elements,0,0)
-
 
     def __generate_boundary_elements(self):
         boundary_elements = np.array([[0,0]])

@@ -4,10 +4,13 @@ import sympy as sym
 import math
 import matplotlib.pyplot as plt # Matplotlib imported for plotting, tri is for the triangulation plots
 import matplotlib.tri as tri
-from LocalInterpolator import LocalInterpolator
-from Error import Error
+from . import interpolator
+from . import error
 
-def FEM_solver(geometry, physics, initial = False):
+def FEM_solver(geometry, physics):
+    """Function that returns the functions you need to calculate stiffness and mass matrix and the error.
+
+    """
     coordinates = geometry["coordinates"]
     elements = geometry["elements"]
     boundary_elements_dirichlet = geometry["boundary_elements_dirichlet"]
@@ -84,12 +87,11 @@ def FEM_solver(geometry, physics, initial = False):
         y_2 = r[1][0].subs(s,1/math.sqrt(3))
         return (f(x_1, y_1)*shape_func_1d[loc_node].subs(x,-1/math.sqrt(3))+f(x_2,y_2)*shape_func_1d[loc_node].subs(x,1/math.sqrt(3)))*dr
 
-    local_interpolator = LocalInterpolator(elements,boundary_elements_dirichlet,local_to_reference_map)
+    local_interpolator = interpolator.LocalInterpolator(elements,boundary_elements_dirichlet,local_to_reference_map)
 
     A = np.zeros((len(coordinates),len(coordinates)))
     B = np.zeros((len(coordinates),len(coordinates)))
     Z = np.zeros((len(coordinates),len(coordinates)))
-    u = np.zeros((A.shape[0]))
     #Shape function integrals:
     shape_int = []
     for fun1 in shape_func:
@@ -108,7 +110,6 @@ def FEM_solver(geometry, physics, initial = False):
         jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
         #Local assembler
         for j in range(3):
-            u[elements[e][j]] = physics["initial"](coordinates[elements[e][j]][0],coordinates[elements[e][j]][1])
             for i in range(3):
                 A[elements[e][i]][elements[e][j]] += 0.5*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
                 if elements[e][i] in boundary_nodes_dirichlet or elements[e][j] in boundary_nodes_dirichlet:
@@ -126,7 +127,23 @@ def FEM_solver(geometry, physics, initial = False):
         
 
     def mass(f=None,u=None):
-
+        """Returns the stiffness matrix, <phi_i, phi_j>, if nothing is passed, otherwise it returns the inner product <f(u),phi_i>
+            where phi_i are the basis hat functions.
+        """
+        if u is None:
+            B = np.zeros((len(coordinates),len(coordinates)))
+            for e in range(len(elements)):
+                # extract element information
+                [J,c] = local_to_reference_map(e)
+                jac = np.linalg.det(J) #Determinant of tranformation matrix = inverse of area of local elements
+                #Local assembler
+                for j in range(3):
+                    for i in range(3):
+                        if elements[e][i] in boundary_nodes_dirichlet or elements[e][j] in boundary_nodes_dirichlet:
+                            pass
+                        else:
+                            B[elements[e][i]][elements[e][j]] += shape_int[i][j]*1/jac
+            return B
         M = np.zeros(len(coordinates))
         for e in range(len(elements)):
             # extract element information
@@ -146,6 +163,8 @@ def FEM_solver(geometry, physics, initial = False):
 
         return(M)
     def source(t=None):
+        """Returns the inner product <source(x,y,t),phi_i>
+        """
         f_vect = np.zeros((len(coordinates)))
         f_old = physics["source"]
         neumann_boundary = lambda x,y: physics["neumann"](x,y,t)
@@ -169,6 +188,9 @@ def FEM_solver(geometry, physics, initial = False):
             f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1],t)
         return f_vect
     def stiffness(f,u,gravity = False):
+        """ Returns <f(u)grad(phi_i),grad(phi_j)>, if one just wants the simple stiffness matrix
+            One would just pass f=lambda x:1
+        """
         C = np.zeros((len(coordinates),len(coordinates)))
         # Matrix assembly
         for e in range(len(elements)):
@@ -182,13 +204,11 @@ def FEM_solver(geometry, physics, initial = False):
             #Local assembler
             for j in range(3):
                 for i in range(3):
-                    x_1 = R.dot(np.array([[1/3],[1/3]]))+d
-                    x_2 = R.dot(np.array([[3/5],[1/5]]))+d
-                    x_3 = R.dot(np.array([[1/5],[3/5]]))+d
-                    x_4 = R.dot(np.array([[1/5],[1/5]]))+d
-                    w_1 = -9/32; w_2 = 25/96; w_3 = 25/96; w_4 = 25/96
-                    #K_int = quad_2d_2nd_order_shape(e,interpolator,i)
-                    K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0])+w_4*interpolator(x_4[0][0],x_4[1][0]))
+                    x_1 = R.dot(np.array([[1/6],[1/6]]))+d
+                    x_2 = R.dot(np.array([[1/6],[2/3]]))+d
+                    x_3 = R.dot(np.array([[2/3],[1/6]]))+d
+                    w_1 = 1/6; w_2 = 1/6; w_3 = 1/6
+                    K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0]))
                     if gravity:
                         C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]+e_z).transpose().dot(transform.dot(shape_grad[j]))/jac
                     else:
@@ -202,21 +222,18 @@ def FEM_solver(geometry, physics, initial = False):
             C[boundary_elements_dirichlet[e][1]][boundary_elements_dirichlet[e][1]]=1
 
         return C
-
-    error = Error(local_interpolator,elements,coordinates)
-    if initial:
-        return(mass,A,B,stiffness,source,u,error)
-    return (mass,B,A,stiffness,source,error)
+    return (mass,stiffness,source,error.Error(local_interpolator,elements,coordinates))
 
 
 
 def plot(u, geometry):
-    #Plot plot solution
     xcoords, ycoords = geometry["coordinates"].T
     plt.tricontourf(xcoords, ycoords, geometry["elements"], u)
     plt.colorbar()
     plt.show()
 def vectorize(u,geometry):
+    """ interpolates a function so one gets it's coordinates in the solution space expressed in the basis hat functions.
+    """
     x = sym.symbols('x')
     y = sym.symbols('y')
     coordinates = geometry["coordinates"]

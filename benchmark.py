@@ -1,7 +1,7 @@
 import numpy as np
 import sympy as sym
 import math
-from FEM import FEM_solver, plot,vectorize
+from solver.FEM import FEM_solver, plot,vectorize
 from richards import Richards
 import matplotlib.pyplot as plt
 theta_s = 0.396
@@ -63,8 +63,8 @@ physics = equation.getPhysics()
 physics['source'] = f
 physics['neumann'] = lambda x,y,t: 0
 physics['dirichlet'] = sym.lambdify([x,y,t],dirichlet)
-mass,A,B,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
-
+mass,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
+B = mass()
 th = np.linspace(0,3/16,9,endpoint=False)
 print(th)
 tau = th[1]-th[0]
@@ -78,7 +78,7 @@ u_init = 1-y
 u = vectorize(u_init,equation.geometry)
 plot(u,equation.geometry)
 
-def newton(u_j,u_n,TOL,L,K,tau,f):
+def L_scheme(u_j,u_n,TOL,L,K,tau,f):
     rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
     A = stiffness(K,u_j,gravity=True)
     lhs = L*B+tau*A
@@ -87,13 +87,13 @@ def newton(u_j,u_n,TOL,L,K,tau,f):
     print(np.linalg.norm(u_j_n-u_j))
 
     if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
-        return newton(u_j_n,u_n,TOL,L,K,tau,f)
+        return L_scheme(u_j_n,u_n,TOL,L,K,tau,f)
     else:
         return u_j_n
 
 
 for i in th[1:]:
-    u =  newton(u,u,TOL,L,K,tau,source(i))
+    u =  L_scheme(u,u,TOL,L,K,tau,source(i))
     plot(u,equation.geometry)
     if i>dt:
         dirichlet = sym.Piecewise(
