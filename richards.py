@@ -6,12 +6,19 @@ from MeshGenerator import Mesh
     Can also be instantiated with mesh_path to a .msh file in version2 ASCI.
 """
 class Richards:
+<<<<<<< HEAD
     def __init__(self,mesh_path = None,max_edge=False):
         if not max_edge:
             #Read input file
             if mesh_path is not None:
                 gmshfile = open(mesh_path,'r')
             #gmshfile = open("mesh/example1.msh",'r')
+=======
+    def __init__(self,max_edge=False):
+        if not max_edge:
+            #Read input file
+            gmshfile = open("mesh/benchmark.msh",'r')
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
             nodes = False
             element = False
             physicalname = False
@@ -59,6 +66,21 @@ class Richards:
                         boundary_elements_dirichlet = np.concatenate((boundary_elements_dirichlet,np.array([[int(line_elements[5])-1,int(line_elements[6])-1]])))
                     if (len(line_elements) >= 2) and (line_elements[1]=='1') and (line_elements[3] == str(neumannmarker)):
                         boundary_elements_neumann = np.concatenate((boundary_elements_neumann,np.array([[int(line_elements[5])-1,int(line_elements[6])-1]])))
+<<<<<<< HEAD
+=======
+
+            
+            coordinates=np.delete(coordinates,0,axis=0)
+            elements=np.delete(elements,0,axis=0)   
+            boundary_elements_dirichlet=np.delete(boundary_elements_dirichlet,0,axis=0)
+            boundary_elements_neumann=np.delete(boundary_elements_neumann,0,axis=0)
+        else: 
+            mesh = Mesh(max_edge*math.sqrt(2))
+            boundary_elements_dirichlet = mesh.boundary_elements
+            boundary_elements_neumann = np.array([[0,0]])
+            elements = mesh.elements
+            coordinates = mesh.coordinates
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
 
             
             coordinates=np.delete(coordinates,0,axis=0)

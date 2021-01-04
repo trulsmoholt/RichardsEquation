@@ -20,6 +20,7 @@ def richards_equation():
     print(sym.simplify(f))
     f = sym.lambdify([x,y,t],f)
 
+<<<<<<< HEAD
     equation = Richards(max_edge = 0.125)
     physics = equation.getPhysics()
     physics['source'] = f
@@ -27,6 +28,15 @@ def richards_equation():
     mass,stiffness,source,error = FEM_solver(equation.geometry, equation.physics)
     B = mass()
     th = np.linspace(0,1,64)
+=======
+    equation = Richards(0.5)
+    physics = equation.getPhysics()
+    physics['source'] = f
+    physics['neumann'] = sym.lambdify([x,y,t],K.subs(p,u_exact)*sym.diff(u_exact,y))
+    mass,A,B,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
+
+    th = np.linspace(0,1,4)
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
 
     tau = th[1]-th[0]
     TOL = 0.000005
@@ -51,25 +61,40 @@ def richards_equation():
 
 
     for i in th[1:]:
+<<<<<<< HEAD
         u =  L_scheme(u,u,TOL,L,K,tau,source(i))
+=======
+        u =  newton(u,u,TOL,L,K,tau,source(i))
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
         u_e = vectorize(u_exact.subs(t,i),equation.geometry)
         error.l2_error(u,u_exact.subs(t,i))
     plot(u_e,equation.geometry)
     plot(u-u_e,equation.geometry)
     error.max_error(u,u_exact.subs(t,i))
+<<<<<<< HEAD
 richards_equation()
 
+=======
+difficult()
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
 def heat_equation():
     T_end = 1
     f = sym.diff(u_exact,t,1)-(sym.diff(u_exact,x,2)+sym.diff(u_exact,y,2))
     f = sym.lambdify([x,y,t],f)
+<<<<<<< HEAD
     equation = Richards(max_edge = 0.125)
+=======
+    equation = Richards(0.0625)
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
     physics = equation.getPhysics()
     physics['source'] = f
     mass,stiffness,source,error = FEM_solver(equation.geometry, equation.physics)
     B = mass()
     u = vectorize(u_exact.subs(t,0),equation.geometry)
+<<<<<<< HEAD
     A = stiffness(lambda x:1,u)
+=======
+>>>>>>> 2879b5990665c6aafec6305a48ece7bc51ce6eb3
     th = np.linspace(0,T_end,256)
     tau = th[1]-th[0]
     for i in th[1:]:
