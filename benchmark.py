@@ -23,7 +23,7 @@ def theta(psi):
 
 def K(psi):
     if psi <= 0:
-        return k_s*math.pow(theta(psi),0.5)*(1-math.pow(1-math.pow(theta(psi),n/(n-1)),(n-1)/n)**2)
+        return k_s*math.pow(theta(psi),0.5)*(1-math.pow(1-math.pow(theta(psi),n/(n-1)),(n-1)/n))**2
     else:
         return k_s
 p_range = np.linspace(-2,1,40)
@@ -65,7 +65,7 @@ physics['neumann'] = lambda x,y,t: 0
 physics['dirichlet'] = sym.lambdify([x,y,t],dirichlet)
 mass,A,B,stiffness,source,u,error = FEM_solver(equation.geometry, equation.physics, initial = True)
 
-th = np.linspace(0,3/16,9,endpoint=True)
+th = np.linspace(0,3/16,9,endpoint=False)
 print(th)
 tau = th[1]-th[0]
 TOL = 0.0005

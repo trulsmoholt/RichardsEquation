@@ -8,7 +8,7 @@ class Mesh:
         self.max_h = max_h
         self.X = 1
         self.Y = 1
-        self.num_boundary_elements = math.ceil(self.X/(max_h/math.sqrt(2)))
+        self.num_boundary_elements = math.ceil(self.X/(max_h/math.sqrt(2))) #number of elements on one side of domain
         self.coordinates = np.array([[0,0]])
         self.__generate_coordinates()
         #self.__generate_elements()
@@ -49,11 +49,11 @@ class Mesh:
     def __generate_boundary_elements(self):
         boundary_elements = np.array([[0,0]])
         for i in range(0,self.num_boundary_elements):
-            boundary_elements = np.concatenate((boundary_elements,np.array([[i,i+1]])))
+            boundary_elements = np.concatenate((boundary_elements,np.array([[i,i+1]])))#bottom
             top_bnd = len(self.coordinates)-self.num_boundary_elements-1
-            boundary_elements = np.concatenate((boundary_elements,np.array([[top_bnd + i,top_bnd +i+1]])))
-            boundary_elements = np.concatenate((boundary_elements,np.array([[i*(self.num_boundary_elements+1),(i+1)*(self.num_boundary_elements+1)]])))
-            boundary_elements = np.concatenate((boundary_elements,np.array([[(i+1)*(self.num_boundary_elements+1)-1,(i+2)*(self.num_boundary_elements+1)-1]])))
+            boundary_elements = np.concatenate((boundary_elements,np.array([[top_bnd + i,top_bnd +i+1]])))#top
+            boundary_elements = np.concatenate((boundary_elements,np.array([[i*(self.num_boundary_elements+1),(i+1)*(self.num_boundary_elements+1)]])))#left
+            boundary_elements = np.concatenate((boundary_elements,np.array([[(i+1)*(self.num_boundary_elements+1)-1,(i+2)*(self.num_boundary_elements+1)-1]])))#right
             self.boundary_elements = np.delete(boundary_elements,0,0)           
 # mesh = Mesh(0.5*math.sqrt(2))
 # points = mesh.coordinates
