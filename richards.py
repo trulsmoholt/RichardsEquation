@@ -5,7 +5,7 @@ class Richards:
     def __init__(self,max_edge=False):
         if not max_edge:
             #Read input file
-            gmshfile = open("mesh/benchmark.msh",'r')
+            gmshfile = open("mesh/example1.msh",'r')
             nodes = False
             element = False
             physicalname = False
