@@ -136,8 +136,8 @@ def FEM_solver(geometry, physics):
 
 
         return(M)
-    def source(t=None):
-        """Returns the inner product <source(x,y,t),phi_i>
+    def source(t=None,u=None,K=None):
+        """Returns the inner product <source(x,y,t),phi_i>+<K(psi)e_z,phi_i>
         """
         f_vect = np.zeros((len(coordinates)))
         f_old = physics["source"]
@@ -154,6 +154,19 @@ def FEM_solver(geometry, physics):
             #Local assembler
             for j in range(3):
                 f_vect[elements[e][j]] = float(f_vect[elements[e][j]]) + quad_2d_2nd_order_shape(e,f,j)/jac       
+            #for computing gravity
+            if u is not None:
+                interpolator = lambda x,y: local_interpolator(K,u,e,x,y)
+                [R,d] = reference_to_local_map(e)
+                x_1 = R.dot(np.array([[1/6],[1/6]]))+d
+                x_2 = R.dot(np.array([[1/6],[2/3]]))+d
+                x_3 = R.dot(np.array([[2/3],[1/6]]))+d
+                w_1 = 1/6; w_2 = 1/6; w_3 = 1/6
+                K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0]))
+                for j in range(3):
+                    f_vect[elements[e][j]]=float(f_vect[elements[e][j]]) - K_int*e_z_global.T.dot(J.T.dot(shape_grad[j]))/jac
+
+
         for e in range(len(boundary_elements_neumann)):
             for i in range(2):
                 f_vect[boundary_elements_neumann[e][i]] = f_vect[boundary_elements_neumann[e][i]] + quad_2nd_ord_line(neumann_boundary,e,i)
@@ -161,7 +174,7 @@ def FEM_solver(geometry, physics):
             f_vect[boundary_elements_dirichlet[e][0]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][0]][0], coordinates[boundary_elements_dirichlet[e][0]][1],t)
             f_vect[boundary_elements_dirichlet[e][1]]=physics["dirichlet"](coordinates[boundary_elements_dirichlet[e][1]][0], coordinates[boundary_elements_dirichlet[e][1]][1],t)
         return f_vect
-    def stiffness(f,u,gravity = False):
+    def stiffness(f,u):
         """ Returns <f(u)grad(phi_i),grad(phi_j)>, if one just wants the simple stiffness matrix
             One would just pass f=lambda x:1
         """
@@ -183,12 +196,7 @@ def FEM_solver(geometry, physics):
                     x_3 = R.dot(np.array([[2/3],[1/6]]))+d
                     w_1 = 1/6; w_2 = 1/6; w_3 = 1/6
                     K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0]))
-                    if gravity:
-                        left = J.T.dot(shape_grad[i])+e_z_global
-                        right = J.T.dot(shape_grad[j])
-                        C[elements[e][i]][elements[e][j]] += K_int*(left.T.dot(right))/jac
-                    else:
-                        C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
+                    C[elements[e][i]][elements[e][j]] += K_int*(shape_grad[i]).transpose().dot(transform.dot(shape_grad[j]))/jac
 
             #Dirichlet
         for e in range(len(boundary_elements_dirichlet)):
@@ -204,7 +212,7 @@ def FEM_solver(geometry, physics):
 
 def plot(u, geometry):
     xcoords, ycoords = geometry["coordinates"].T
-    plt.tricontourf(xcoords, ycoords, geometry["elements"], u)
+    plt.tricontourf(xcoords, ycoords, geometry["elements"], u, levels = [-2,-1,-0.5,-0.3,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.5,0.75,1],linewidths=0.1)
     plt.colorbar()
     plt.show()
 def vectorize(u,geometry):

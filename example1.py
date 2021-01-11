@@ -46,8 +46,9 @@ y = sym.Symbol('y')
 t = sym.Symbol('t')
 
 
-f = 0.006*sym.cos(4/3*math.pi*y)*sym.sin(2*math.pi*x)
-f = sym.lambdify([x,y,t],f)
+#f = 0.006*sym.cos(4/3*math.pi*y)*sym.sin(2*math.pi*x)
+#f = sym.lambdify([x,y,t],f)
+f = lambda x,y,t: 0
 
 equation = Richards(mesh_path="mesh/example1.msh")
 physics = equation.getPhysics()
@@ -75,20 +76,20 @@ plot(u,equation.geometry)
 def L_scheme(u_j,u_n,TOL,L,K,tau,f,num_iter):
     num_iter = num_iter + 1
     rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
-    A = stiffness(K,u_j,gravity=True)
+    A = stiffness(K,u_j)
     lhs = L*B+tau*A
     u_j_n = np.linalg.solve(lhs,rhs)
 
     print('error: ',np.linalg.norm(u_j_n-u_j),'iteration: ',num_iter)
 
     if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
-        return L_scheme(u_j_n,u_n,TOL,L,K,tau,f,num_iter)
+        return L_scheme(u_j_n,u_n,TOL,L,K,tau,source(i,u_j_n,K),num_iter)
     else:
         return u_j_n
 
 for i in th[1:]:
     num_iter = 0
-    u =  L_scheme(u,u,TOL,L,K,tau,source(i),num_iter)
+    u =  L_scheme(u,u,TOL,L,K,tau,source(i,u,K),num_iter)
 
     plot(u,equation.geometry)
 
