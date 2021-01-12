@@ -164,7 +164,7 @@ def FEM_solver(geometry, physics):
                 w_1 = 1/6; w_2 = 1/6; w_3 = 1/6
                 K_int = (w_1*interpolator(x_1[0][0],x_1[1][0])+w_2*interpolator(x_2[0][0],x_2[1][0])+w_3*interpolator(x_3[0][0],x_3[1][0]))
                 for j in range(3):
-                    f_vect[elements[e][j]]=float(f_vect[elements[e][j]]) - K_int*e_z_global.T.dot(J.T.dot(shape_grad[j]))/jac
+                    f_vect[elements[e][j]]=float(f_vect[elements[e][j]]) #- K_int*e_z_global.T.dot(J.T.dot(shape_grad[j]))/jac
 
 
         for e in range(len(boundary_elements_neumann)):
@@ -212,7 +212,7 @@ def FEM_solver(geometry, physics):
 
 def plot(u, geometry):
     xcoords, ycoords = geometry["coordinates"].T
-    plt.tricontourf(xcoords, ycoords, geometry["elements"], u, levels = [-2,-1,-0.5,-0.3,-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2,0.25,0.3,0.5,0.75,1],linewidths=0.1)
+    plt.tricontourf(xcoords, ycoords, geometry["elements"], u,25)
     plt.colorbar()
     plt.show()
 def vectorize(u,geometry):

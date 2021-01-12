@@ -4,11 +4,11 @@ import math
 from solver.FEM import FEM_solver, plot,vectorize
 from richards import Richards
 import matplotlib.pyplot as plt
-theta_s = 0.396
-theta_r = 0.131
-k_s = 0.0496
-alpha = 0.423
-n = 2.06
+theta_s = 0.446
+theta_r = 0
+k_s = 0.00082
+alpha = 0.152
+n = 1.17
 
 def theta(psi):
     if psi <=0:
@@ -38,7 +38,7 @@ plt.show()
 x = sym.Symbol('x')
 y = sym.Symbol('y')
 t = sym.Symbol('t')
-dt = 1/16
+dt = 1
 
 
 
@@ -59,11 +59,11 @@ physics['neumann'] = lambda x,y,t: 0
 physics['dirichlet'] = sym.lambdify([x,y,t],dirichlet)
 mass,stiffness,source,error = FEM_solver(equation.geometry, equation.physics)
 B = mass()
-th = np.linspace(0,3/16+1/48,10,endpoint=False)
+th = np.linspace(0,(3+1/3),10,endpoint=False)
 print(th)
 tau = th[1]-th[0]
 TOL = 0.00001
-L = 0.035
+L = 0.007456
 u_j = np.zeros(B.shape[1])
 u_j_n = np.ones(B.shape[1])
 
@@ -79,6 +79,8 @@ def L_scheme(u_j,u_n,TOL,L,K,tau,f):
     u_j_n = np.linalg.solve(lhs,rhs)
 
     print(np.linalg.norm(u_j_n-u_j))
+    plot(u_j,equation.geometry)
+    plot(source(i,u_j,K),equation.geometry)
 
     if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
         return L_scheme(u_j_n,u_n,TOL,L,K,tau,source(i,u_j_n,K))
@@ -88,11 +90,10 @@ def L_scheme(u_j,u_n,TOL,L,K,tau,f):
 
 for i in th[1:]:
 
+    #plot(u,equation.geometry)
 
     u =  L_scheme(u,u,TOL,L,K,tau,source(i,u,K))
-    plot(u,equation.geometry)
 
-    print(i)
     if i>dt:
         dirichlet = sym.Piecewise(
             (1-y, y<=1),
