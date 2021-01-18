@@ -18,7 +18,8 @@ def theta(psi):
 
 def K(psi):
     if psi <= 0:
-        return k_s*math.pow(theta(psi),0.5)*(1-math.pow(1-math.pow(theta(psi),n/(n-1)),(n-1)/n))**2
+        theta_scaled = (theta(psi)-theta_r)/(theta_s-theta_r)
+        return k_s*math.pow(theta_scaled,0.5)*(1-math.pow(1-math.pow(theta_scaled,n/(n-1)),(n-1)/n))**2
     else:
         return k_s
 p_range = np.linspace(-2,1,40)
@@ -63,7 +64,7 @@ th = np.linspace(0,(3+1/3),10,endpoint=False)
 print(th)
 tau = th[1]-th[0]
 TOL = 0.00001
-L = 0.007456
+L = 0.0065
 u_j = np.zeros(B.shape[1])
 u_j_n = np.ones(B.shape[1])
 
@@ -74,13 +75,13 @@ plot(u,equation.geometry)
 
 def L_scheme(u_j,u_n,TOL,L,K,tau,f):
     rhs = L*B@u_j+mass(theta,u_n)-mass(theta,u_j)+tau*f
+
+
     A = stiffness(K,u_j)
     lhs = L*B+tau*A
     u_j_n = np.linalg.solve(lhs,rhs)
 
     print(np.linalg.norm(u_j_n-u_j))
-    plot(u_j,equation.geometry)
-    plot(source(i,u_j,K),equation.geometry)
 
     if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
         return L_scheme(u_j_n,u_n,TOL,L,K,tau,source(i,u_j_n,K))
@@ -93,6 +94,7 @@ for i in th[1:]:
     #plot(u,equation.geometry)
 
     u =  L_scheme(u,u,TOL,L,K,tau,source(i,u,K))
+    plot(u,equation.geometry)
 
     if i>dt:
         dirichlet = sym.Piecewise(

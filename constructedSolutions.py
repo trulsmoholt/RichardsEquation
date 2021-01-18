@@ -16,17 +16,17 @@ u_exact = -(t)*x*y*(1-x)*(1-y) - 1
 def richards_equation():
     K = p**2
     theta = 1/(1-p)
-    f = sym.diff(theta.subs(p,u_exact),t)-divergence(gradient(u_exact,[x,y]),[x,y],K.subs(p,u_exact))
+    f = sym.diff(theta.subs(p,u_exact),t)-divergence(gradient(u_exact + y ,[x,y]),[x,y],K.subs(p,u_exact))
     print(sym.simplify(f))
     f = sym.lambdify([x,y,t],f)
 
-    equation = Richards(max_edge = 0.25)
+    equation = Richards(max_edge = 0.125)
     physics = equation.getPhysics()
     physics['source'] = f
     physics['neumann'] = sym.lambdify([x,y,t],K.subs(p,u_exact)*sym.diff(u_exact,y))
     mass,stiffness,source,error = FEM_solver(equation.geometry, equation.physics)
     B = mass()
-    th = np.linspace(0,1,16)
+    th = np.linspace(0,1,64)
 
     tau = th[1]-th[0]
     TOL = 0.000005
@@ -43,17 +43,19 @@ def richards_equation():
         A = stiffness(K,u_j)
         lhs = L*B+tau*A
         u_j_n = np.linalg.solve(lhs,rhs)
-
+        print(np.linalg.norm(u_j_n-u_j))
         if np.linalg.norm(u_j_n-u_j)>TOL + TOL*np.linalg.norm(u_j_n):
-            return L_scheme(u_j_n,u_n,TOL,L,K,tau,f)
+            return L_scheme(u_j_n,u_n,TOL,L,K,tau,source(i,u_j_n,K))
         else:
             return u_j_n
 
 
     for i in th[1:]:
-        u =  L_scheme(u,u,TOL,L,K,tau,source(i))
+        u =  L_scheme(u,u,TOL,L,K,tau,source(i,u,K))
         u_e = vectorize(u_exact.subs(t,i),equation.geometry)
         error.l2_error(u,u_exact.subs(t,i))
+    plot(u,equation.geometry)
+
     plot(u_e,equation.geometry)
     plot(u-u_e,equation.geometry)
     error.max_error(u,u_exact.subs(t,i))
